@@ -7,7 +7,12 @@ const zod = require("zod");
 async function adminMiddleware(req, res, next) {
   // Implement admin auth logic
   // You need to check the headers and validate the admin from the admin DB. Check readme for the exact headers to be expected
-  const { username, password } = req.headers;
+  const { username, password, Authorization } = req.headers;
+    const jwt = Authorization.split(" ")[1];
+    const check = jwt.verify(jwt, process.env.SECRET_TOKEN);
+    if(!check){
+      res.status(404).json({ message: "jwt Auth failed!!" });
+    }
   const dbData = await Admin.findOne({ username });
   const emailSchema = zod.string().email();
   const passwordSchema = zod.string().min(6);

@@ -18,9 +18,20 @@ router.post("/signup", async (req, res) => {
   }
 });
 
+router.post("/signin", async (req, res) => {
+  // Implement admin signup logic
+  const { username, password } = req.headers;
+  const result = await Admin.findOne({ username });
+  if (result && bcrypt.compare(password, result.password)) {
+    const jwt = jwt.sign(result, process.env.SECRET_TOKEN, { expires: "10m" });
+    res.status(200).json({ message: "Your credentials are correct", jwt });
+  }
+});
+
 router.post("/courses", adminMiddleware, async (req, res) => {
   // Implement course creation logic
-  const { username, password } = req.headers;
+  const { username, password, Authorization } = req.headers;
+
   const creator = await Admin.findOne({ username });
   const { title, description, price, imageUrl, published } = req.body;
   if (!title || !description || !price || !imageUrl || !published) {
@@ -49,19 +60,21 @@ router.post("/courses", adminMiddleware, async (req, res) => {
 
 router.get("/courses", adminMiddleware, async (req, res) => {
   // Implement fetching all courses logic
-  const { username, password } = req.headers;
+  const { username, password, Authorization } = req.headers;
+
   const creator = await Admin.findOne({ username });
   const courses = creator.createdcourses; // all the ID's of courses
-//   for(let i in courses) console.log("course ids",courses[i]);
-    const result = await Course.find({
-      _id: {
-        $in: courses,
-      },
-    });
-    if (result) {
-      res.status(200).json({ All_courses: result });
-    }
-//   res.status(200);
+  //   for(let i in courses) console.log("course ids",courses[i]);
+  const result = await Course.find({
+    _id: {
+      $in: courses,
+    },
+  });
+  if (result) {
+    res.status(200).json({ All_courses: result });
+  }
+
+  //   res.status(200);
 });
 
 module.exports = router;
